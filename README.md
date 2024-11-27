@@ -6,8 +6,6 @@
 
 This bot is designed to automate the distribution of SOL to multiple wallets and execute simultaneous buy and sell swap transactions on the Raydium DEX. By integrating Jito Bundle, the bot optimizes all transactions, ensuring maximum performance and efficiency.
 
-![Solana Swap Process](./images/solana_swap_process.png)
-
 ## 📚 Table of Contents
 
 - [Features](#-features)
@@ -22,11 +20,11 @@ This bot is designed to automate the distribution of SOL to multiple wallets and
 
 ## 🌟 Features
 
-- Automated Distribution: Efficiently distributes SOL across multiple wallets.
-- Endless Swaps: Performs simultaneous buy and sell transactions seamlessly.
-- Optimized Performance: Leverages Jito Bundle for transaction bundling and enhanced speed.
-- Market Impact: Helps increase the token's market holders through active volume generation.
-- Powered by Solana: Utilizes Solana’s high-speed, low-cost blockchain for optimal performance.
+- **Automated Distribution**: Efficiently distributes SOL across multiple wallets.
+- **Endless Swaps: Performs** simultaneous buy and sell transactions seamlessly.
+- **Optimized Performance**: Leverages Jito Bundle for transaction bundling and enhanced speed.
+- **Market Impact**: Helps increase the token's market holders through active volume generation.
+- **Powered by Solana**: Utilizes Solana’s high-speed, low-cost blockchain for optimal performance.
 - Jito bundles for MEV protection
 - Comprehensive error handling and logging
 
