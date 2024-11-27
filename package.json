@@ -1,5 +1,5 @@
 {
-  "name": "volume-bot",
+  "name": "Raydium-Volume-Bot-v2",
   "scripts": {
     "tsc": "tsc --noEmit",
     "start": "ts-node index.ts",
