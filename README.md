@@ -40,8 +40,8 @@ This bot is designed to automate the distribution of SOL to multiple wallets and
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/builderby/solana-swap-tutorial.git
-   cd solana-swap-tutorial
+   git clone https://github.com/black-rustx/RaydiumVolumeBot-v2.git
+   cd RaydiumVolumeBot-v2
    ```
 
 2. Install dependencies:
@@ -52,8 +52,8 @@ This bot is designed to automate the distribution of SOL to multiple wallets and
 
 3. Create a .env file in the project root and add your Solana RPC URL and wallet private key:
    ```
-   SOLANA_RPC_URL=https://your-rpc-url-here
-   WALLET_PRIVATE_KEY=[your,private,keypair,array,here]
+   RPC_ENDPOINT=https://your-rpc-url-here
+   PRIVATE_KEY=[your,private,keypair,array,here]
    ```
    We have included an example .env file in the repository for your convenience.
 
@@ -71,52 +71,46 @@ This will execute a sample swap of 0.01 SOL to USDC. Modify the `main` function 
 
 The `index.js` file contains the following key components:
 
-1. **Setup and Imports**: Essential libraries and modules are imported, and constants are defined for the Jupiter API and Jito RPC URL.
+1. **Setup and Imports**:
 
-2. **Helper Functions**:
+   - The script imports essential libraries and modules for interacting with Solana, including @solana/web3.js, @solana/spl-token, and custom utility functions from utils and executor modules.
+   - Constants like RPC endpoints, intervals, and token mint details are imported from a constants file.
 
-   - **`deserializeInstruction`**: Converts raw instruction data into a structured format for processing.
-   - **`getAddressLookupTableAccounts`**: Fetches and deserializes Address Lookup Table accounts to optimize transaction size.
+2. **Solana Connection and Main Wallet Initialization**:
 
-3. **Token Information Retrieval**:
+   - **`solanaConnection`**: Establishes a connection to the Solana blockchain using an RPC endpoint with WebSocket support for real-time updates.
+   - **`mainKp`**: Initializes the main wallet using a private key decoded from `base58`.
 
-   - **`getTokenInfo`**: Fetches token metadata, including decimals, to ensure accurate amount calculations.
+3. **Key Functions**:
 
-4. **Priority Fee Calculation**:
+   - **`distributeSol`**: Distributes SOL from the main wallet to multiple newly generated wallets, ensuring each has enough balance for subsequent operations.
+   - **`buy`**: Executes buy transactions for tokens using Jupiter's aggregator for efficient swaps.Dynamically adjusts the buy amount based on wallet SOL balance and configured percentages (BUY_UPPER_PERCENT and BUY_LOWER_PERCENT). Utilizes Jito Bundle integration for optimized transaction execution when enabled.
+   - **`sell`**: Sells tokens held in associated token accounts by leveraging Jupiter's swap functionality. Handles token balance checks and ensures the transaction is completed successfully.
 
-   - **`getAveragePriorityFee`**: Dynamically calculates the average priority fee based on recent network conditions, ensuring competitive transaction fees.
+4. **Wallet Transfer**:
 
-5. **Jito Integration**:
+   - Transfers remaining SOL to a newly generated wallet after each buy-and-sell cycle to reset the operation loop.
 
-   - **`getTipAccounts`**: Retrieves Jito tip accounts for MEV protection.
-   - **`createJitoBundle`**: Bundles transactions for efficient execution and sends them to Jito.
-   - **`sendJitoBundle`**: Sends the created Jito bundle to the network.
+5. **Main Logic**:
 
-6. **Transaction Simulation**:
+   The main function orchestrates the entire bot process:
 
-   - **`simulateTransaction`**: Simulates the transaction to estimate compute units required, adding a buffer for safety.
+   - Prints bot settings, wallet balance, and other configurations..
+   - Distributes SOL to sub-wallets for parallel operations
+   - Executes an endless cycle of buying, selling, and redistributing SOL
 
-7. **Main Swap Function**:
+6. **Optimization Features**:
 
-   - **`swap`**: Orchestrates the entire swap process, including:
-     - Fetching quotes from Jupiter V6
-     - Preparing swap instructions
-     - Simulating transactions for accurate compute units
-     - Fetching dynamic priority fees
-     - Creating versioned transactions with optimized parameters
-     - Applying compute budget and priority fees
-     - Bundling and sending transactions via Jito
+   - **`Jito Bundle Integration`**: Enhances transaction bundling for improved efficiency and ensures optimal MEV protection.
+   - **`Compute Budget Instructions`**: Adds compute unit limits and custom unit prices to transactions, improving performance on the Solana network.
+
+7. **Error Handling and Logging**:
+
+   - Comprehensive error handling ensures the bot continues or retries failed transactions without interrupting the workflow.
+   - Logs detailed messages to track operations, including transaction links for monitoring on Solscan.
 
 8. **Example Usage**:
-   - The `main` function demonstrates how to initiate a swap operation, specifying input and output tokens, amount, and slippage.
-
-## Address Lookup Tables (ALTs)
-
-Address Lookup Tables are a feature in Solana that allows transactions to reference frequently used addresses stored on-chain. This reduces transaction size and cost, especially for complex operations like token swaps. Our tutorial demonstrates how to:
-
-- Fetch ALT accounts associated with a swap
-- Incorporate ALTs into versioned transactions
-- Use ALTs to optimize transaction structure and reduce fees
+   - Simply run the script to start the bot. It continuously performs buy-and-sell operations on the Raydium DEX and redistributes SOL across wallets, leveraging Solana's efficiency and Jupiter's aggregation.
 
 ## Transaction Simulation
 
@@ -129,19 +123,9 @@ To ensure accurate compute unit allocation, we simulate the transaction before s
 
 This approach helps prevent transaction failures due to insufficient compute budget.
 
-## Dynamic Priority Fees
-
-Instead of using a fixed priority fee, we now dynamically calculate it based on recent network conditions:
-
-1. Fetch recent prioritization fees using `connection.getRecentPrioritizationFees()`.
-2. Calculate the average fee from the last 150 slots.
-3. Use this average as the priority fee for the transaction.
-
-This ensures our transactions remain competitive even as network conditions change.
-
 ## 🏆 Best Practices
 
-This tutorial implements several Solana development best practices:
+This volume bot implements several best practices:
 
 - **Versioned Transactions**: Utilizes the latest transaction format for improved efficiency.
 - **Compute Budget Optimization**: Uses transaction simulation to set appropriate compute units.
@@ -149,7 +133,6 @@ This tutorial implements several Solana development best practices:
 - **Address Lookup Tables**: Leverages ALTs to reduce transaction size and cost.
 - **MEV Protection**: Integrates with Jito for protection against MEV (Miner Extractable Value).
 - **Error Handling**: Implements comprehensive error catching and logging for easier debugging.
-- **Modular Design**: Separates concerns into distinct functions for better maintainability.
 
 ## 🤝 Contributing
 
@@ -161,7 +144,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 💖 Support the Developer
 
-If you found this tutorial helpful and would like to support the development of more resources like this, consider tipping! Your contributions help keep the project alive and thriving.
+If you found this bot helpful and would like to support the development of more resources like this, consider tipping! Your contributions help keep the project alive and thriving.
 
 **Solana Wallet Address:** `jaDpUj6FzoQFtA5hCcgDwqnCFqHFcZKDSz71ke9zHZA`
 **ETH Wallet Address:** `0x96aca495621E93c884A8cb054bB823Bc273C29Bb`
@@ -169,3 +152,7 @@ If you found this tutorial helpful and would like to support the development of 
 Thank you for your support!
 
 Happy swapping! If you have any questions or run into issues, please open an issue in the GitHub repository.
+
+## 📞 Author
+
+Telegram: [@g0drlc](https://t.me/da1asin)
