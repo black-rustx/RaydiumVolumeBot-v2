@@ -164,32 +164,8 @@ const main = async () => {
       let k = 0
       while (true) {
         try {
-          if (k > 5) {
-            console.log("Failed to transfer SOL to new wallet in one of sub wallet")
-            return
-          }
-          const destinationKp = Keypair.generate()
-
-          const tx = new Transaction().add(
-            ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }),
-            ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 20_000 }),
-            SystemProgram.transfer({
-              fromPubkey: srcKp.publicKey,
-              toPubkey: destinationKp.publicKey,
-              lamports: balance - 17_000
-            })
-          )
-
-          tx.feePayer = srcKp.publicKey
-          tx.recentBlockhash = (await solanaConnection.getLatestBlockhash()).blockhash
-
-          // console.log(await solanaConnection.simulateTransaction(tx))
-          saveDataToFile([{
-            privateKey: base58.encode(destinationKp.secretKey),
-            pubkey: destinationKp.publicKey.toBase58(),
-          }])
-          const sig = await sendAndConfirmTransaction(solanaConnection, tx, [srcKp], { skipPreflight: true, commitment: "finalized" })
-          srcKp = destinationKp
+          // TODO
+          
           // console.log(await solanaConnection.getBalance(destinationKp.publicKey) / 10 ** 9, "SOL")
           console.log(`Transferred SOL to new wallet after buy and sell, https://solscan.io/tx/${sig}`)
           break
@@ -202,170 +178,14 @@ const main = async () => {
 }
 
 const distributeSol = async (connection: Connection, mainKp: Keypair, distritbutionNum: number) => {
-  const data: Data[] = []
-  const wallets = []
-  try {
-    const sendSolTx: TransactionInstruction[] = []
-    sendSolTx.push(
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 100_000 }),
-      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 250_000 })
-    )
-    const mainSolBal = await connection.getBalance(mainKp.publicKey)
-    if (mainSolBal <= 4 * 10 ** 6) {
-      console.log("Main wallet balance is not enough")
-      return []
-    }
-    let solAmount = Math.floor(mainSolBal / distritbutionNum - 5 * 10 ** 6)
-
-    for (let i = 0; i < distritbutionNum; i++) {
-
-      const wallet = Keypair.generate()
-      wallets.push({ kp: wallet, buyAmount: solAmount })
-
-      sendSolTx.push(
-        SystemProgram.transfer({
-          fromPubkey: mainKp.publicKey,
-          toPubkey: wallet.publicKey,
-          lamports: solAmount
-        })
-      )
-    }
-
-    let index = 0
-    while (true) {
-      try {
-        if (index > 5) {
-          console.log("Error in distribution")
-          return null
-        }
-        const siTx = new Transaction().add(...sendSolTx)
-        const latestBlockhash = await solanaConnection.getLatestBlockhash()
-        siTx.feePayer = mainKp.publicKey
-        siTx.recentBlockhash = latestBlockhash.blockhash
-        const messageV0 = new TransactionMessage({
-          payerKey: mainKp.publicKey,
-          recentBlockhash: latestBlockhash.blockhash,
-          instructions: sendSolTx,
-        }).compileToV0Message()
-        const transaction = new VersionedTransaction(messageV0)
-        transaction.sign([mainKp])
-        let txSig
-        if (JITO_MODE) {
-          txSig = await executeJitoTx([transaction], mainKp, jitoCommitment)
-        } else {
-          txSig = await execute(transaction, latestBlockhash, 1)
-        }
-        if (txSig) {
-          const distibuteTx = txSig ? `https://solscan.io/tx/${txSig}` : ''
-          console.log("SOL distributed ", distibuteTx)
-          break
-        }
-        index++
-      } catch (error) {
-        index++
-      }
-    }
-
-    wallets.map((wallet) => {
-      data.push({
-        privateKey: base58.encode(wallet.kp.secretKey),
-        pubkey: wallet.kp.publicKey.toBase58(),
-      })
-    })
-    try {
-      saveDataToFile(data)
-    } catch (error) {
-
-    }
-    console.log("Success in distribution")
-    return wallets
-  } catch (error) {
-    console.log(`Failed to transfer SOL`)
-    return null
-  }
+//TODO
 }
 
 const buy = async (newWallet: Keypair, baseMint: PublicKey, buyAmount: number) => {
-  let solBalance: number = 0
-  try {
-    solBalance = await solanaConnection.getBalance(newWallet.publicKey)
-  } catch (error) {
-    console.log("Error getting balance of wallet")
-    return null
-  }
-  if (solBalance == 0) {
-    return null
-  }
-  try {
-    let buyTx = await getBuyTxWithJupiter(newWallet, baseMint, buyAmount)
-    if (buyTx == null) {
-      console.log(`Error getting buy transaction`)
-      return null
-    }
-    // console.log(await solanaConnection.simulateTransaction(buyTx))
-    let txSig
-    if (JITO_MODE) {
-      txSig = await executeJitoTx([buyTx], mainKp, jitoCommitment)
-    } else {
-      const latestBlockhash = await solanaConnection.getLatestBlockhash()
-      txSig = await execute(buyTx, latestBlockhash, 1)
-    }
-    if (txSig) {
-      const tokenBuyTx = txSig ? `https://solscan.io/tx/${txSig}` : ''
-      console.log("Success in buy transaction: ", tokenBuyTx)
-      return tokenBuyTx
-    } else {
-      return null
-    }
-  } catch (error) {
-    return null
-  }
+ //TODO
 }
 
 const sell = async (baseMint: PublicKey, wallet: Keypair) => {
-  try {
-    const data: Data[] = readJson()
-    if (data.length == 0) {
-      await sleep(1000)
-      return null
-    }
-
-    const tokenAta = await getAssociatedTokenAddress(baseMint, wallet.publicKey)
-    const tokenBalInfo = await solanaConnection.getTokenAccountBalance(tokenAta)
-    if (!tokenBalInfo) {
-      console.log("Balance incorrect")
-      return null
-    }
-    const tokenBalance = tokenBalInfo.value.amount
-
-    try {
-      let sellTx = await getSellTxWithJupiter(wallet, baseMint, tokenBalance)
-
-      if (sellTx == null) {
-        console.log(`Error getting buy transaction`)
-        return null
-      }
-      // console.log(await solanaConnection.simulateTransaction(sellTx))
-      let txSig
-      if (JITO_MODE) {
-        txSig = await executeJitoTx([sellTx], mainKp, jitoCommitment)
-      } else {
-        const latestBlockhash = await solanaConnection.getLatestBlockhash()
-        txSig = await execute(sellTx, latestBlockhash, 1)
-      }
-      if (txSig) {
-        const tokenSellTx = txSig ? `https://solscan.io/tx/${txSig}` : ''
-        console.log("Success in sell transaction: ", tokenSellTx)
-        return tokenSellTx
-      } else {
-        return null
-      }
-    } catch (error) {
-      return null
-    }
-  } catch (error) {
-    return null
-  }
+//TODO
 }
-
 main()
